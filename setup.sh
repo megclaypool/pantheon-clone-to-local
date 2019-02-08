@@ -1,0 +1,237 @@
+#!/bin/bash
+
+# If you prefer, you can set these variables manually before running the script. 
+# Otherwise, you'll be setting them interactively when you run the script :)
+
+SITE_MACHINE_NAME=''
+# SITE_TYPE can be WP, D7, or D8
+SITE_TYPE=''
+SITE_ENV=''
+SQL_USERNAME=''
+SQL_PASSWORD=''
+# COPY_FILES can be yes or no
+COPY_FILES=''
+
+
+
+# Don't mess with the stuff below here! #
+#########################################
+
+# Check that mysql is installed
+command -v mysql >/dev/null 2>&1 || { echo >&2 "This script uses mysql, which you don't seem to have installed yet... Please install mysql and try running this script again :)"; exit 1; }
+
+# Check that terminus is installed
+command -v terminus >/dev/null 2>&1 || { echo >&2 "This script uses terminus, which you don't seem to have installed yet... Please install terminus and try running this script again :)"; exit 1; }
+
+# Check that robo is installed
+command -v robo >/dev/null 2>&1 || { echo >&2 "This script uses robo, which you don't seem to have installed yet... Please install robo and try running this script again :)"; exit 1; }
+
+
+# Set a whole bunch of variables #
+##################################
+
+# Get the script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# if $SITE_MACHINE_NAME isn't set above, prompt the user
+if [ -z "$SITE_MACHINE_NAME" ]
+then
+  echo "Enter the pantheon machine name for this site"
+  read SITE_MACHINE_NAME
+fi
+
+# use terminus to get the site's id number (needed for the clone address)
+SITE_ID=$(terminus site:info --field id -- $SITE_MACHINE_NAME)
+# if $SITE_ID isn't set after running the above, there's probably an error in the SITE_MACHINE_NAME
+while [ -z "$SITE_ID" ]
+  do
+    echo -e "It looks like you may have entered the machine name of your site incorrectly; Terminus is returning an error instead of a site id... \n\nYou can find the machine name of your site by visiting the site's Pantheon dashboard and clicking the tab for the dev environment. Then click the \"Visit Development Site\" button. The site's machine name is the bit between \"dev-\" and \".pantheonsite.io\" in the url. \n\nPlease enter the machine name of your site"
+    read SITE_MACHINE_NAME
+    SITE_ID=$(terminus site:info --field id -- $SITE_MACHINE_NAME)
+  done
+
+# if $SITE_TYPE isn't set above, prompt the user
+if [ -z "$SITE_TYPE" ]
+then
+  echo "Is this a WP site, a D7 site, or a D8 site?"
+  read SITE_TYPE
+  SITE_TYPE=$( echo "$SITE_TYPE" | tr '[:lower:]' '[:upper:]')
+
+  while [ "${SITE_TYPE}" != "WP" ] && [ "${SITE_TYPE}" != "D7" ] && [ "${SITE_TYPE}" != "D8" ]
+    do
+      echo "Please use 'WP', 'D7', or 'D8' to describe this site"
+      read SITE_TYPE
+      SITE_TYPE=$( echo "$SITE_TYPE" | tr '[:lower:]' '[:upper:]')
+    done
+fi
+
+# if $SITE_ENV isn't set above, prompt the user
+if [ -z "$SITE_ENV" ]
+then
+  echo "From which environment would you like to clone the database and (possibly) files?"
+  read SITE_ENV
+fi
+
+# if $COPY_FILES isn't set above, prompt the user
+if [ -z "$COPY_FILES" ]
+then
+  echo "Would you like to download all the site's files, in addition to the code and database? (Yes / No)"
+  read COPY_FILES
+    COPY_FILES=$( echo "$COPY_FILES" | tr '[:upper:]' '[:lower:]' )
+    if [ "${COPY_FILES}" == "y" ]
+      then
+        COPY_FILES='yes'
+    fi
+    if [ "${COPY_FILES}" == "n" ]
+      then
+        COPY_FILES='no'
+    fi
+    while [ "${COPY_FILES}" != "yes" ] && [ "${COPY_FILES}" != "no" ]
+    do
+      echo "err... That was a yes or no question... Let's try again: Would you like to download all the site's files, in addition to the code and database? (Yes / No)"
+      read SITE_TYPE
+      COPY_FILES=$( echo "$COPY_FILES" | tr '[:upper:]' '[:lower:]' )
+    done
+    if [ "${COPY_FILES}" == "no" ]
+      then
+      echo "Ok, I won't download the files right now. You can download them later using the command \"robo pullfiles\"."
+    fi
+fi
+
+# if $SQL_USERNAME isn't set above, prompt the user
+if [ -z "$SQL_USERNAME" ]
+then
+  echo "Enter your mysql username"
+  read SQL_USERNAME
+fi
+
+# if $SQL_PASSWORD isn't set above, prompt the user
+if [ -z "$SQL_PASSWORD" ]
+then
+  echo "Enter your mysql password (hit enter if you don't have a password set)"
+  read SQL_PASSWORD
+fi
+
+# set the sql database name based on the site machine name
+SQL_DATABASE=${SITE_MACHINE_NAME//-/_}
+
+
+
+# Now to start actually doing stuff! #
+######################################
+
+# create the sql database
+
+if [ -z "$SQL_PASSWORD" ]
+  then
+    DB_CHECK=$(mysqlshow -u "${SQL_USERNAME} ${SQL_DATABASE}" | grep "Unknown database") 1> /dev/null
+    if [ -z "${DB_CHECK}" ]
+      then
+        mysql -u$SQL_USERNAME -e "drop database $SQL_DATABASE"
+    fi
+    mysql -u $SQL_USERNAME -e "create database $SQL_DATABASE"
+  else
+    DB_CHECK=$(mysqlshow -u "${SQL_USERNAME} -p${SQL_PASSWORD} ${SQL_DATABASE}" | grep "Unknown database") 1> /dev/null
+    if [ -z "${DB_CHECK}" ]
+      then
+        mysql -u $SQL_USERNAME -p$SQL_PASSWORD -e "drop database $SQL_DATABASE"
+    fi
+    mysql -u$SQL_USERNAME -p$SQL_PASSWORD -e "create database $SQL_DATABASE"
+fi
+
+git clone ssh://codeserver.dev.${SITE_ID}@codeserver.dev.${SITE_ID}.drush.in:2222/~/repository.git ${SITE_MACHINE_NAME}
+
+cd ${SITE_MACHINE_NAME}
+
+# if the RoboFile already exists, delete it (we want to have the latest version)
+if [ -f 'RoboFile.php' ]
+  then
+    rm RoboFile.php
+fi
+
+if [ -f 'RoboLocal.php' ]
+  then
+    rm RoboLocal.php
+fi
+
+# Snag an up-to-date copy of the RoboFile 
+cp ${SCRIPT_DIR}/assets/RoboFile.php ./RoboFile.php
+
+# Depending on what kind of site this is, copy over the right version of RoboLocal
+# Also copy over the local config or settings file and then find and replace variables
+if [ "${SITE_TYPE}" == "WP" ]
+  then
+    cp ${SCRIPT_DIR}/assets/wordpress.RoboLocal.php ./RoboLocal.php
+    cp ${SCRIPT_DIR}/assets/wordpress.wp-config-local.php ./wp-config-local.php
+
+    sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./wp-config-local.php
+    sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./wp-config-local.php
+    sed -i '' -e "s/MYSQL_PASSWORD_PLACEHOLDER/$SQL_PASSWORD/g" ./wp-config-local.php
+fi
+
+if [ "${SITE_TYPE}" == "D7" ]
+  then
+    cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.php
+    cp ${SCRIPT_DIR}/assets/drupal7.settings.local.php ./sites/default/settings.local.php
+
+    sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./sites/default/settings.local.php
+    sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./sites/default/settings.local.php
+    sed -i '' -e "s/MYSQL_PASSWORD_PLACEHOLDER/$SQL_PASSWORD/g" ./sites/default/settings.local.php
+fi
+
+if [ "${SITE_TYPE}" == "D8" ]
+  then
+    cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.php
+    if [ -d ./web ]
+      then 
+        cp ${SCRIPT_DIR}/assets/drupal8.settings.local.php ./web/sites/default/settings.local.php
+        cp ${SCRIPT_DIR}/assets/drupal8.services.local.yml ./web/sites/default/services.local.yml
+
+        sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./web/sites/default/settings.local.php
+        sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./web/sites/default/settings.local.php
+        sed -i '' -e "s/MYSQL_PASSWORD_PLACEHOLDER/$SQL_PASSWORD/g" ./web/sites/default/settings.local.php
+      else
+        cp ${SCRIPT_DIR}/assets/drupal8.settings.local.php ./sites/default/settings.local.php
+        cp ${SCRIPT_DIR}/assets/drupal8.services.local.yml ./sites/default/services.local.yml
+
+        sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./sites/default/settings.local.php
+        sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./sites/default/settings.local.php
+        sed -i '' -e "s/MYSQL_PASSWORD_PLACEHOLDER/$SQL_PASSWORD/g" ./sites/default/settings.local.php
+    fi
+fi
+
+sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./RoboLocal.php
+sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./RoboLocal.php
+sed -i '' -e "s/SITE_MACHINE_NAME_PLACEHOLDER/$SITE_MACHINE_NAME/g" ./RoboLocal.php
+sed -i '' -e "s/SITE_ENV_PLACEHOLDER/$SITE_ENV/g" ./RoboLocal.php
+
+if [ ! -z "$SQL_PASSWORD" ]
+  then
+    sed -i '' -e "s/\/\/ define('ROBO_DB_PASS', 'MYSQL_PASSWORD_PLACEHOLDER');/define('ROBO_DB_PASS', '${SQL_PASSWORD}')/g" ./RoboLocal.php
+fi
+
+# In theory everything is set up and ready for robo pull!
+robo pull
+
+if [ "${COPY_FILES}" == "yes" ] 
+  then
+    echo "The database is set up, and I'm about to start pulling the files from the $SITE_ENV environment. This can take quite a while, so if you'd like you can start messing around while the files download :)"
+    robo pullfiles
+fi
+
+
+
+
+
+
+
+
+# 1. COLLECT ALL THE VARIABLES
+# 2. CREATE THE DATABASE
+# 3. CLONE THE SITE
+# 4. COPY IN THE APPROPRIATE FILES
+# 5. REPLACE THE APPROPRIATE VARIABLES IN THE COPIED FILES
+# 6. USE ROBO TO COPY THE DATABASE
+# 7. IF DESIRED, USE ROBO TO COPY THE FILES
+
+# TODO: maybe check in settings.php / wp-config.php to see if the local files are being included and add the include if it's not there (some older sites, maybe)
