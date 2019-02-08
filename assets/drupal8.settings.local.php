@@ -38,9 +38,10 @@ if (!defined('PANTHEON_ENVIRONMENT')) {
   
   /**
    * Set Kint's max levels when using Devel and Kint in Drupal 8:
+   * Only uncomment if devel kint is installed and enabled!
    */
-  require_once DRUPAL_ROOT . '/modules/contrib/devel/kint/kint/Kint.class.php';
-  Kint::$maxLevels = 3;
+  // require_once DRUPAL_ROOT . '/modules/contrib/devel/kint/kint/Kint.class.php';
+  // Kint::$maxLevels = 3;
   
   
   /**
