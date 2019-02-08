@@ -115,32 +115,32 @@ fi
 # set the sql database name based on the site machine name
 SQL_DATABASE=${SITE_MACHINE_NAME//-/_}
 
+DB_EXISTS=$(mysql -u $SQL_USERNAME -e "use ${SQL_DATABASE}" 2> /dev/null; echo "$?")
 
 
 # Now to start actually doing stuff! #
 ######################################
 
-# create the sql database
-
+# if the sql database already exists, drop it and create a new one
 if [ -z "$SQL_PASSWORD" ]
   then
-    DB_CHECK=$(mysqlshow -u "${SQL_USERNAME} ${SQL_DATABASE}" | grep "Unknown database") 1> /dev/null
-    if [ -z "${DB_CHECK}" ]
+    if [ $DB_EXISTS == 0 ]
       then
-        mysql -u$SQL_USERNAME -e "drop database $SQL_DATABASE"
-    fi
+          mysql -u$SQL_USERNAME -e "drop database $SQL_DATABASE"
+      fi
     mysql -u $SQL_USERNAME -e "create database $SQL_DATABASE"
   else
-    DB_CHECK=$(mysqlshow -u "${SQL_USERNAME} -p${SQL_PASSWORD} ${SQL_DATABASE}" | grep "Unknown database") 1> /dev/null
-    if [ -z "${DB_CHECK}" ]
+    if [ $DB_EXISTS == 0 ]
       then
-        mysql -u $SQL_USERNAME -p$SQL_PASSWORD -e "drop database $SQL_DATABASE"
+        mysql -u$SQL_USERNAME -p$SQL_PASSWORD -e "drop database $SQL_DATABASE"
     fi
     mysql -u$SQL_USERNAME -p$SQL_PASSWORD -e "create database $SQL_DATABASE"
 fi
 
+# clone the site code from pantheon
 git clone ssh://codeserver.dev.${SITE_ID}@codeserver.dev.${SITE_ID}.drush.in:2222/~/repository.git ${SITE_MACHINE_NAME}
 
+# change to the site directory
 cd ${SITE_MACHINE_NAME}
 
 # if the RoboFile already exists, delete it (we want to have the latest version)
