@@ -15,3 +15,7 @@ Clone a Pantheon site (WordPress, Drupal 7, or Drupal 8) to your local, includin
 1.   Clone this project to your local. (Either put it in your Sites directory (or Projects or whatever you call it) or add an alias to the script in your bash profile to make it easier to call.)
 2.   You can either edit the script for each site you want to download, filling in the variables at the top, or just run it and input the variables in the interactive wizard.
 3.   The automatic detection of which kind of site (WordPress, Drupal 7, or Drupal 8) is based on Pantheon upstreams, and includes some custom upstreams. You may need to edit the script to include any of your own custom upstreams.
+
+## Bonus
+
+When you clone a site with the clone script, a robo script will installed at the root of your site. From then on you can just enter `robo pull` in the terminal to replace your local database with a fresh copy of the database from Pantheon, and `robo pullfiles` to pull copies of the uploads :)
