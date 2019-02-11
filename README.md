@@ -18,4 +18,4 @@ Clone a Pantheon site (WordPress, Drupal 7, or Drupal 8) to your local, includin
 
 ## Bonus
 
-When you clone a site with the clone script, a robo script will installed at the root of your site. From then on you can just enter `robo pull` in the terminal to replace your local database with a fresh copy of the database from Pantheon, and `robo pullfiles` to pull copies of the uploads :)
+When you clone a site with the clone script, a robo script will installed at the root of your site. From then on you can just navigate to your site root in the terminal and enter `robo pull` to replace your local database with a fresh copy of the database from Pantheon, and `robo pullfiles` to pull copies of the uploads :)
