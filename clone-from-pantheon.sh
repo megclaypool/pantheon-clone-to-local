@@ -184,6 +184,19 @@ fi
 # Snag an up-to-date copy of the RoboFile 
 cp ${SCRIPT_DIR}/assets/RoboFile.php ./RoboFile.php
 
+# Add RoboLocal.php to .gitignore if it's not already there
+if [ -f .gitignore ]
+then
+  if ! grep -q "RoboLocal.php" ".gitignore"
+  then
+    echo -e "\n\n# Local Robo Settings #\n#######################\nRoboLocal.php" >> .gitignore
+  fi
+else  
+  touch .gitignore
+  echo -e "\n\n# Local Robo Settings #\n#######################\nRoboLocal.php" >> .gitignore
+fi
+
+
 
 # Depending on what kind of site this is, copy over the right version of RoboLocal
 # Also copy over the local config or settings file and then find and replace variables
@@ -207,6 +220,12 @@ if [ "${SITE_TYPE}" == "WP" ]
       then
         sed -i '' -e "s/\'wp-content\/uploads\'/\'web\/wp-content\/uploads\'/g" ./RoboLocal.php
     fi
+
+    # make sure wp-config-local is listed in the .gitignore
+    if ! grep -q "wp-config-local.php" ".gitignore"
+    then
+      echo -e "\n\n# Local Settings #\n##################\nwp-config-local.php" >> .gitignore
+    fi
 fi
 
 if [ "${SITE_TYPE}" == "D7" ]
@@ -229,6 +248,12 @@ if [ "${SITE_TYPE}" == "D7" ]
       then
         sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.php
     fi
+
+    # make sure settings.local is listed in the .gitignore
+    if ! grep -q "settings.local.php" ".gitignore"
+    then
+      echo -e "\n\n# Local Settings #\n##################\nsettings.local.php" >> .gitignore
+    fi
 fi
 
 if [ "${SITE_TYPE}" == "D8" ]
@@ -250,6 +275,18 @@ if [ "${SITE_TYPE}" == "D8" ]
     if [ "${DIRECTORY_PATH}" == "./web" ]
       then
         sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.php
+    fi
+
+    # make sure settings.local is listed in the .gitignore
+    if ! grep -q "settings.local.php" ".gitignore"
+    then
+      echo -e "\n\n# Local Settings #\n##################\nsettings.local.php" >> .gitignore
+    fi
+
+    # make sure services.local is listed in the .gitignore
+    if ! grep -q "services.local.yml" ".gitignore"
+    then
+      echo -e "\n\n# Local Debug Settings #\n########################\nservices.local.yml" >> .gitignore
     fi
 fi
 
@@ -277,12 +314,12 @@ fi
 
 
 
-# # 1. COLLECT ALL THE VARIABLES
-# # 2. CREATE THE DATABASE
-# # 3. CLONE THE SITE
-# # 4. COPY IN THE APPROPRIATE FILES
-# # 5. REPLACE THE APPROPRIATE VARIABLES IN THE COPIED FILES
-# # 6. USE ROBO TO COPY THE DATABASE
-# # 7. IF DESIRED, USE ROBO TO COPY THE FILES
+# 1. COLLECT ALL THE VARIABLES
+# 2. CREATE THE DATABASE
+# 3. CLONE THE SITE
+# 4. COPY IN THE APPROPRIATE FILES
+# 5. REPLACE THE APPROPRIATE VARIABLES IN THE COPIED FILES
+# 6. USE ROBO TO COPY THE DATABASE
+# 7. IF DESIRED, USE ROBO TO COPY THE FILES
 
-# # TODO: maybe check in settings.php / wp-config.php to see if the local files are being included and add the include if it's not there (some older sites, maybe)
+# TODO: maybe check in settings.php / wp-config.php to see if the local files are being included and add the include if it's not there (some older sites, maybe)
