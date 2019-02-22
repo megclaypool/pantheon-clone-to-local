@@ -170,7 +170,7 @@ git clone ssh://codeserver.dev.${SITE_ID}@codeserver.dev.${SITE_ID}.drush.in:222
 # change to the site directory
 cd ${SITE_MACHINE_NAME}
 
-# if the RoboFile already exists, delete it (we want to have the latest version)
+# if the Robo files already exist, delete them (we want to have the latest version)
 if [ -f 'RoboFile.php' ]
   then
     rm RoboFile.php
@@ -179,6 +179,11 @@ fi
 if [ -f 'RoboLocal.php' ]
   then
     rm RoboLocal.php
+fi
+
+if [ -f 'RoboLocal.example.php' ]
+  then
+    rm RoboLocal.example.php
 fi
 
 # Snag an up-to-date copy of the RoboFile 
@@ -210,7 +215,10 @@ if [ "${SITE_TYPE}" == "WP" ]
         DIRECTORY_PATH='.'
     fi
     cp ${SCRIPT_DIR}/assets/wordpress.RoboLocal.php ./RoboLocal.php
+    cp ${SCRIPT_DIR}/assets/wordpress.RoboLocal.php ./RoboLocal.example.php
     cp ${SCRIPT_DIR}/assets/wordpress.wp-config-local.php ${DIRECTORY_PATH}/wp-config-local.php
+
+    
 
     sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ${DIRECTORY_PATH}/wp-config-local.php
     sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ${DIRECTORY_PATH}/wp-config-local.php
@@ -219,6 +227,7 @@ if [ "${SITE_TYPE}" == "WP" ]
     if [ "${DIRECTORY_PATH}" == "./web" ]
       then
         sed -i '' -e "s/\'wp-content\/uploads\'/\'web\/wp-content\/uploads\'/g" ./RoboLocal.php
+        sed -i '' -e "s/\'wp-content\/uploads\'/\'web\/wp-content\/uploads\'/g" ./RoboLocal.example.php
     fi
 
     # make sure wp-config-local is listed in the .gitignore
@@ -238,6 +247,7 @@ if [ "${SITE_TYPE}" == "D7" ]
         DIRECTORY_PATH='.'
     fi
     cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.php
+    cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.example.php
     cp ${SCRIPT_DIR}/assets/drupal7.settings.local.php ${DIRECTORY_PATH}/sites/default/settings.local.php
 
     sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ${DIRECTORY_PATH}/sites/default/settings.local.php
@@ -247,6 +257,7 @@ if [ "${SITE_TYPE}" == "D7" ]
     if [ "${DIRECTORY_PATH}" == "./web" ]
       then
         sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.php
+        sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.example.php
     fi
 
     # make sure settings.local is listed in the .gitignore
@@ -265,6 +276,7 @@ if [ "${SITE_TYPE}" == "D8" ]
         DIRECTORY_PATH='.'
     fi
     cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.php
+    cp ${SCRIPT_DIR}/assets/drupal.RoboLocal.php ./RoboLocal.example.php
     cp ${SCRIPT_DIR}/assets/drupal8.settings.local.php ${DIRECTORY_PATH}/sites/default/settings.local.php
     cp ${SCRIPT_DIR}/assets/drupal8.services.local.yml ${DIRECTORY_PATH}/sites/default/services.local.yml
 
@@ -275,6 +287,7 @@ if [ "${SITE_TYPE}" == "D8" ]
     if [ "${DIRECTORY_PATH}" == "./web" ]
       then
         sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.php
+        sed -i '' -e "s/\'sites\/default\/files\'/\'web\/sites\/default\/files\'/g" ./RoboLocal.example.php
     fi
 
     # make sure settings.local is listed in the .gitignore
