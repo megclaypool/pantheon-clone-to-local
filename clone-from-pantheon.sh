@@ -1,16 +1,35 @@
 #!/bin/bash
 
-# If you prefer, you can set these variables manually before running the script. 
-# Otherwise, you'll be setting them interactively when you run the script :)
+# You can set your local mysql username and password in clone_script.settings.local.yml
+# Otherwise, you'll be setting them interactively with the other variables when you run the script :)
 
 SITE_MACHINE_NAME=''
-# SITE_TYPE can be WP, D7, or D8 -- leave blank to autodetect
-SITE_TYPE=''
 SITE_ENV=''
-SQL_USERNAME=''
-SQL_PASSWORD=''
 # COPY_FILES can be yes or no
 COPY_FILES=''
+
+
+# SITE_TYPE can be WP, D7, or D8 -- leave blank to autodetect
+SITE_TYPE=''
+
+
+
+# Get the script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+LOCAL_SETTINGS=${SCRIPT_DIR}/assets/clone_script.settings.local.yml 
+
+if [ -f ${LOCAL_SETTINGS} ]
+then
+  temp_username=$(grep 'username:' ${LOCAL_SETTINGS} | sed -n -e 's/^.*username: //p'); 
+  temp_password=$(grep 'password:' ${LOCAL_SETTINGS} | sed -n -e 's/^.*password: //p'); 
+  if [ "${temp_username//\"/}" != "MYSQL_USERNAME" ] && [ "${temp_password//\"/}" != "MYSQL_PASSWORD" ]
+  then
+    SQL_USERNAME=${temp_username//\"/} 
+    SQL_PASSWORD=${temp_password//\"/}
+    NAME_PASS_SET="true"
+  fi
+fi
 
 
 
@@ -30,9 +49,6 @@ command -v robo >/dev/null 2>&1 || { echo >&2 "This script uses robo, which you 
 
 # Set a whole bunch of variables #
 ##################################
-
-# Get the script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # if $SITE_MACHINE_NAME isn't set above, prompt the user
 if [ -z "$SITE_MACHINE_NAME" ]
@@ -124,14 +140,14 @@ then
 fi
 
 # if $SQL_USERNAME isn't set above, prompt the user
-if [ -z "$SQL_USERNAME" ]
+if [ "${NAME_PASS_SET}" != "true" ]
 then
   echo -e "\nEnter your mysql username"
   read SQL_USERNAME
 fi
 
 # if $SQL_PASSWORD isn't set above, prompt the user
-if [ -z "$SQL_PASSWORD" ]
+if [ "${NAME_PASS_SET}" != "true" ]
 then
   echo -e "\nEnter your mysql password (hit enter if you don't have a password set)"
   read SQL_PASSWORD

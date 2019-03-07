@@ -9,3 +9,7 @@ Thumbs.db
 # Vim generated files #
 ######################
 *.un~
+
+# Local database login info #
+#############################
+clone_script.settings.local.yml

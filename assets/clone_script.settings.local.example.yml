@@ -1,0 +1,5 @@
+# copy this file and rename it clone_script.settings.local
+# edit the values so they match your local mysql username and pass
+
+local_mysql_username: "MYSQL_USERNAME"
+local_mysql_password: "MYSQL_PASSWORD"
