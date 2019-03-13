@@ -7,8 +7,6 @@
  
 if (file_exists(dirname(__FILE__) . '/RoboLocal.php') && !isset($_ENV['PANTHEON_ENVIRONMENT'])):
   include(dirname(__FILE__) . '/RoboLocal.php');
-global $config;
-print_r($config);
 endif;
  
 class RoboFile extends \Robo\Tasks {

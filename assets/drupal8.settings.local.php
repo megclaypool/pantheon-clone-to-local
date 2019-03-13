@@ -34,6 +34,14 @@ if (!defined('PANTHEON_ENVIRONMENT')) {
   
   $settings['hash_salt'] = 'my_random_hash';
   $settings['container_yamls'][] = __DIR__ . '/services.local.yml';
+
+  /** 
+   * Error Logging
+   */
+  // error_reporting(E_ALL);
+  // ini_set('display_errors', TRUE);
+  // ini_set('display_startup_errors', TRUE);
+  // $config['system.logging']['error_level'] = 'verbose';
   
   
   /**
