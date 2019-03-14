@@ -322,6 +322,7 @@ fi
 sed -i '' -e "s/LOCAL_DATABASE_NAME_PLACEHOLDER/$SQL_DATABASE/g" ./RoboLocal.php
 sed -i '' -e "s/MYSQL_USERNAME_PLACEHOLDER/$SQL_USERNAME/g" ./RoboLocal.php
 sed -i '' -e "s/SITE_MACHINE_NAME_PLACEHOLDER/$SITE_MACHINE_NAME/g" ./RoboLocal.php
+sed -i '' -e "s/SITE_MACHINE_NAME_PLACEHOLDER/$SITE_MACHINE_NAME/g" ./RoboLocal.example.php
 sed -i '' -e "s/SITE_ENV_PLACEHOLDER/$SITE_ENV/g" ./RoboLocal.php
 
 if [ ! -z "$SQL_PASSWORD" ]
