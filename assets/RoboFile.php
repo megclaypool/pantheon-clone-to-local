@@ -40,13 +40,27 @@ class RoboFile extends \Robo\Tasks {
     function pullfiles() {
         $env = ROBO_SITENAME . '.' . ROBO_ENV;
         $download = 'files_' . ROBO_ENV;
+
+        $this->say('Removing any previously downloaded file archives.');
  
+        if(file_exists("files.tar.gz")) {
+          $this->_exec("rm -rf files.tar.gz");
+        }
+
+        if(file_exists("$download")) {
+          $this->_exec("rm -rf $download");
+        }
+
         $this->say('Creating files backup on Pantheon.');
         $this->taskExec('terminus')->args('backup:create', $env, '--element=files')->run();
         $this->say('Downloading files.');
         $this->taskExec('terminus')->args('backup:get', $env, '--to=files.tar.gz', '--element=files')->run();
         $this->say('Unzipping archive');
         $this->taskExec('tar')->args('-xvf', './files.tar.gz')->run();
+        $this->say('Checking for .htaccess in files');
+        if(file_exists("$download/.htaccess")) {
+          $this->_exec("rm -rf ./$download/.htaccess");
+        }
         $this->say('Copying Files');
         $this->_copyDir($download, ROBO_FILES_DIR);
  
